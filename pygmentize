@@ -3,8 +3,16 @@
 import sys
 from subprocess import Popen, PIPE, STDOUT
 
+def contains_input_file(args):
+	contains =  not args[len(args) - 2].startswith("-")
+	return contains
 
-log = open('/tmp/pygmentize-output', 'w')
+def read_code(args):
+	f = open(args[len(args) - 1], 'r')
+	return f.read()
+
+
+log = open('/tmp/pygmentize-output', 'a')
 
 pygmentize_cmd = "pygmentize-orig"
 
@@ -16,7 +24,25 @@ for c in sys.argv:
 log.write(pygmentize_cmd)
 log.write("\n")
 
+if contains_input_file(sys.argv):
+	log.write(read_code(sys.argv))
+	log.write("\n")
 
-p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=STDOUT, close_fds=True)
+p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+
+
+if not contains_input_file(sys.argv):
+	stdin_input = sys.stdin.read()
+	p.stdin.write(stdin_input)
+	p.stdin.close()
+
+#print "reading output"
 output = p.stdout.read()
+#print "writing log output"
+
+log.write(output)
+log.write("\n")
+
 print output
+
+
