@@ -55,11 +55,31 @@ def fork_pygmentize_stdin(pygmentize_cmd):
     p.stdin.close()
     return p.stdout.read()
     
+def fork_pygmentize_to_file(pygmentize_cmd, md5, output_filename):
+    p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+    p.communicate(input=None)
+    absolute_path = "/home/csokol/.pygments/cache/" + md5
+    shutil.copy2(output_filename, absolute_path)
+    
 def find_output_filename():
     for i in range(len(sys.argv)):
         if (sys.argv[i] == "-o"):
             return sys.argv[i + 1]
     return None
+    
+def find_from_cache_or_fork(pygmentize_cmd):
+    code_to_pygmentize = read_code(sys.argv)
+    md5 = sourcecode_md5(code_to_pygmentize, pygmentize_cmd)
+    pygmentized_code = find_from_cache(md5)
+    output_filename = find_output_filename()
+    if pygmentized_code != None:
+        log("lendo do cache")
+        output_file = open(output_filename, "w")
+        output_file.write(pygmentized_code)
+        output_file.close()
+    else: 
+        fork_pygmentize_to_file(pygmentize_cmd, md5, output_filename)
+    
         
 pygmentize_cmd = parse_pygmentizeargs(sys.argv)
 
@@ -68,21 +88,7 @@ try:
         output = fork_pygmentize_stdin(pygmentize_cmd)
         print output
     else:
-        code_to_pygmentize = read_code(sys.argv)
-        md5 = sourcecode_md5(code_to_pygmentize, pygmentize_cmd)
-        pygmentized_code = find_from_cache(md5)
-        output_filename = find_output_filename()
-        if pygmentized_code != None:
-            log("lendo do cache")
-            output_file = open(output_filename, "w")
-            output_file.write(pygmentized_code)
-            output_file.close()
-        else: 
-            p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-            p.communicate(input=None)
-            absolute_path = "/home/csokol/.pygments/cache/" + md5
-            shutil.copy2(output_filename, absolute_path)
-        
+        find_from_cache_or_fork(pygmentize_cmd)
 except Exception:
     log("deu erro: " + pygmentize_cmd)
 
