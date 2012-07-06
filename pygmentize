@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import sys, hashlib, os, shlex, time, shutil
+import sys, hashlib, os, shlex, time, shutil, traceback
 from subprocess import Popen, PIPE, STDOUT
 
-CACHE_DIR = "~/.pygments/cache/"
+CACHE_DIR = os.getenv("HOME") + ".pygments/cache/"
 
 def log(string):
     log = open('/tmp/pygmentize-output', 'a')
@@ -92,7 +92,12 @@ try:
     else:
         find_from_cache_or_fork(pygmentize_cmd)
 except Exception:
+    exc_type, exc_value, exc_traceback = sys.exc_info()
     log("deu erro: " + pygmentize_cmd)
+    log_file = open('/tmp/pygmentize-output', 'a')
+    traceback.print_exception(exc_type, exc_value, exc_traceback, limit=10, file=log_file)
+    log_file.close
+
 
 
 
