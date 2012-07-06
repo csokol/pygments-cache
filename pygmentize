@@ -3,7 +3,7 @@
 import sys, hashlib, os, shlex, time, shutil, traceback
 from subprocess import Popen, PIPE, STDOUT
 
-CACHE_DIR = os.getenv("HOME") + ".pygments/cache/"
+CACHE_DIR = os.getenv("HOME") + "/.pygments/cache/"
 
 def log(string):
     log = open('/tmp/pygmentize-output', 'a')
