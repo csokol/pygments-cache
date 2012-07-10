@@ -2,10 +2,9 @@
 
 import sys, hashlib, os, shlex, time, shutil, traceback
 from subprocess import Popen, PIPE, STDOUT
-from cache import *
+from pygments_cache.cache import *
 
 pygments_cache = PygmentizeCache(sys.argv, PygmentizeExecutor(CacheManipulator()), CacheManipulator())
-
 
 try: 
     pygments_cache.execute()

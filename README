@@ -1,4 +1,4 @@
 INSTALLING:
- * move your original pygmentize to pygmentize-orig (something like "mv /usr/bin/pygmentize /usr/bin/pygmentize-orig" should work) you can find the path to your pygmentize executable by running "which pygmentize")
- * create the dir to hold your cache at ~/.pygments/cache (something like "mkdir -p ~/.pygmentize/cache" should work) 
- * replace your pygmentize script for this one and be happy!
+ * Replace your pygmentize script for this one. You can find the path to your pygmentize executable by running "which pygmentize".
+ * Create the dir to hold your cache at ~/.pygments/cache (something like "mkdir -p ~/.pygmentize/cache" should work) 
+ * Replace your pygmentize script for this one and be happy!
