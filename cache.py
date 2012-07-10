@@ -1,8 +1,12 @@
 #!/usr/bin/python
+# EASY-INSTALL-ENTRY-SCRIPT: 'Pygments==1.5','console_scripts','pygmentize'
+__requires__ = 'Pygments==1.5'
 
 import sys, hashlib, os, shlex, time, shutil, traceback
 from subprocess import Popen, PIPE, STDOUT
-
+import sys
+from pkg_resources import load_entry_point
+                                                                                                                                                                                                
 CACHE_DIR = os.getenv("HOME") + "/.pygments/cache/"
 
 def log(string):
@@ -12,17 +16,15 @@ def log(string):
     
 class PygmentizeExecutor():
     def fork_pygmentize_stdin(self, pygmentize_cmd):
-        p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-        stdin_input = sys.stdin.read()
-        p.stdin.write(stdin_input)
-        p.stdin.close()
-        return p.stdout.read()
+        sys.exit(                                                                                                                                                                                       
+            load_entry_point('Pygments==1.5', 'console_scripts', 'pygmentize')()                                                                                                                         
+        )   
         
     def fork_pygmentize_to_file(self, pygmentize_cmd, md5, output_filename):
-        p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-        p.communicate(input=None)
+        exit_val = load_entry_point('Pygments==1.5', 'console_scripts', 'pygmentize')()                                                                                                                         
         absolute_path = CACHE_DIR + md5
         shutil.copy2(output_filename, absolute_path)
+        sys.exit(exit_val)
     
 class PygmentizeCache():
     def __init__(self, argv, executor):
@@ -97,7 +99,6 @@ class PygmentizeCache():
         
     def execute(self):
         if not self.contains_input_file(sys.argv):
-            output = self.fork_pygmentize_stdin()
-            print output
+            self.fork_pygmentize_stdin()
         else:
             self.find_from_cache_or_fork()
