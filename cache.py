@@ -1,8 +1,6 @@
 #!/usr/bin/python
 
 import sys, hashlib, os, shlex, time, shutil, traceback
-from subprocess import Popen, PIPE, STDOUT
-import sys
 from pkg_resources import load_entry_point
                                                                                                                                                                                                 
 CACHE_DIR = os.getenv("HOME") + "/.pygments/cache/"
@@ -18,16 +16,19 @@ class CacheManipulator():
         md5.update(sourcecode + pygmentize_cmd)
         return md5.hexdigest()
         
-    def find(self, code_to_pygmentize, pygmentize_command):
+    def find_and_copy(self, code_to_pygmentize, pygmentize_command, output_filename):
         source_md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
         absolute_path = CACHE_DIR + source_md5
         if (os.path.exists(absolute_path)):
-            pygmentized_code_file = open(absolute_path, 'r')
-            code = pygmentized_code_file.read()
-            pygmentized_code_file.close()
-            return code
+            shutil.copy2(absolute_path, output_filename)
+            return True
         else:
             return None
+            
+    def write(self, code_to_pygmentize, pygmentize_command, output_filename):
+        md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
+        absolute_path = CACHE_DIR + md5
+        shutil.copy2(output_filename, absolute_path)
     
 class PygmentizeExecutor():
     def __init__(self, cache_manipulator):
@@ -42,14 +43,12 @@ class PygmentizeExecutor():
         sys.exit(exit_val)
         
     def fork_pygmentize_to_file(self, code_to_pygmentize, pygmentize_command, output_filename):
-        md5 = self.cache_manipulator.sourcecode_md5(code_to_pygmentize, pygmentize_command)
         exit_val = 0
         try:
             exit_val = load_entry_point('pygments-hack==0.2', 'console_scripts', 'pygmentize')()                                                                                                                         
         except Exception:
             exit_val = load_entry_point('Pygments', 'console_scripts', 'pygmentize')()
-        absolute_path = CACHE_DIR + md5
-        shutil.copy2(output_filename, absolute_path)
+        self.cache_manipulator.write(code_to_pygmentize, pygmentize_command, output_filename)
         sys.exit(exit_val)
     
 class PygmentizeCache():
@@ -78,12 +77,6 @@ class PygmentizeCache():
             pygmentize_cmd += " " + c
         return pygmentize_cmd
         
-    def write_to_cache(self, source_md5, pygmentized_code):
-        absolute_path = CACHE_DIR + source_md5
-        pygmentized_code_file = open(absolute_path, 'w')
-        pygmentized_code_file.write(pygmentized_code)
-        pygmentized_code_file.close()
-
     def find_output_filename(self):
         for i in range(len(self.pygmentize_arguments)):
             if (self.pygmentize_arguments[i] == "-o"):
@@ -97,14 +90,11 @@ class PygmentizeCache():
         self.pygmentize_executor.fork_pygmentize_to_file(code_to_pygmentize, self.pygmentize_command, output_filename)
     
     def find_from_cache_or_fork(self):
-        code_to_pygmentize = self.read_code(self.pygmentize_arguments)
-        pygmentized_code = self.cache_manipulator.find(code_to_pygmentize, self.pygmentize_command)
         output_filename = self.find_output_filename()
-        if pygmentized_code != None:
+        code_to_pygmentize = self.read_code(self.pygmentize_arguments)
+        found_and_copied = self.cache_manipulator.find_and_copy(code_to_pygmentize, self.pygmentize_command, output_filename)
+        if found_and_copied:
             log("lendo do cache")
-            output_file = open(output_filename, "w")
-            output_file.write(pygmentized_code)
-            output_file.close()
         else: 
             self.fork_pygmentize_to_file(code_to_pygmentize, output_filename)
         
