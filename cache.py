@@ -9,8 +9,26 @@ def log(string):
     log = open('/tmp/pygmentize-output', 'a')
     log.write(string + "\n")
     log.close
+    
+class PygmentizeExecutor():
+    def fork_pygmentize_stdin(self, pygmentize_cmd):
+        p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+        stdin_input = sys.stdin.read()
+        p.stdin.write(stdin_input)
+        p.stdin.close()
+        return p.stdout.read()
+        
+    def fork_pygmentize_to_file(self, pygmentize_cmd, md5, output_filename):
+        p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
+        p.communicate(input=None)
+        absolute_path = CACHE_DIR + md5
+        shutil.copy2(output_filename, absolute_path)
+    
 class PygmentizeCache():
-    #def __init__(self):
+    def __init__(self, argv, executor):
+        self.pygmentize_arguments = argv
+        self.pygmentize_command = self.parse_pygmentizeargs()
+        self.pygmentize_executor = executor
 
     def contains_input_file(self, args):
         contains =  not args[len(args) - 2].startswith("-")
@@ -22,10 +40,10 @@ class PygmentizeCache():
         f.close()
         return code
         
-    def parse_pygmentizeargs(self, argv):
+    def parse_pygmentizeargs(self):
         pygmentize_cmd = "pygmentize-orig"
-        for c in argv:
-            if c == argv[0]:
+        for c in self.pygmentize_arguments:
+            if c == self.pygmentize_arguments[0]:
                 continue
             c = c.replace(" ", "")
             pygmentize_cmd += " " + c
@@ -52,28 +70,21 @@ class PygmentizeCache():
         pygmentized_code_file.write(pygmentized_code)
         pygmentized_code_file.close()
 
-    def fork_pygmentize_stdin(self, pygmentize_cmd):
-        p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-        stdin_input = sys.stdin.read()
-        p.stdin.write(stdin_input)
-        p.stdin.close()
-        return p.stdout.read()
-        
-    def fork_pygmentize_to_file(self, pygmentize_cmd, md5, output_filename):
-        p = Popen(pygmentize_cmd, shell=True, stdin=PIPE, stdout=PIPE, stderr=PIPE, close_fds=True)
-        p.communicate(input=None)
-        absolute_path = CACHE_DIR + md5
-        shutil.copy2(output_filename, absolute_path)
-        
     def find_output_filename(self):
-        for i in range(len(sys.argv)):
-            if (sys.argv[i] == "-o"):
-                return sys.argv[i + 1]
+        for i in range(len(self.pygmentize_arguments)):
+            if (self.pygmentize_arguments[i] == "-o"):
+                return self.pygmentize_arguments[i + 1]
         return None
+    
+    def fork_pygmentize_stdin(self):
+        self.pygmentize_executor.fork_pygmentize_stdin(self.pygmentize_command)
         
-    def find_from_cache_or_fork(self, pygmentize_cmd):
-        code_to_pygmentize = self.read_code(sys.argv)
-        md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_cmd)
+    def fork_pygmentize_to_file(self, md5, output_filename):
+        self.pygmentize_executor.fork_pygmentize_to_file(self.pygmentize_command, md5, output_filename)
+    
+    def find_from_cache_or_fork(self):
+        code_to_pygmentize = self.read_code(self.pygmentize_arguments)
+        md5 = self.sourcecode_md5(code_to_pygmentize, self.pygmentize_command)
         pygmentized_code = self.find_from_cache(md5)
         output_filename = self.find_output_filename()
         if pygmentized_code != None:
@@ -82,5 +93,11 @@ class PygmentizeCache():
             output_file.write(pygmentized_code)
             output_file.close()
         else: 
-            self.fork_pygmentize_to_file(pygmentize_cmd, md5, output_filename)
+            self.fork_pygmentize_to_file(md5, output_filename)
         
+    def execute(self):
+        if not self.contains_input_file(sys.argv):
+            output = self.fork_pygmentize_stdin()
+            print output
+        else:
+            self.find_from_cache_or_fork()

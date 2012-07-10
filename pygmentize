@@ -2,18 +2,15 @@
 
 import sys, hashlib, os, shlex, time, shutil, traceback
 from subprocess import Popen, PIPE, STDOUT
-from cache import PygmentizeCache, log
+from cache import PygmentizeCache, PygmentizeExecutor, log
 
-pygments_cache = PygmentizeCache()
+pygments_cache = PygmentizeCache(sys.argv, PygmentizeExecutor())
 
-pygmentize_cmd = pygments_cache.parse_pygmentizeargs(sys.argv)
+pygmentize_cmd = pygments_cache.parse_pygmentizeargs()
 
 try: 
-    if not pygments_cache.contains_input_file(sys.argv):
-        output = pygments_cache.fork_pygmentize_stdin(pygmentize_cmd)
-        print output
-    else:
-        pygments_cache.find_from_cache_or_fork(pygmentize_cmd)
+    pygments_cache.execute()
+        
 except Exception:
     exc_type, exc_value, exc_traceback = sys.exc_info()
     log("deu erro: " + pygmentize_cmd)
