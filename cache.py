@@ -14,6 +14,7 @@ def log(string):
     
 class PygmentizeExecutor():
     def fork_pygmentize_stdin(self, pygmentize_cmd):
+        exit_val = 0
         try:
             exit_val = load_entry_point('pygments-hack==0.2', 'console_scripts', 'pygmentize')()                                                                                                                         
         except Exception:
@@ -21,7 +22,11 @@ class PygmentizeExecutor():
         sys.exit(exit_val)
         
     def fork_pygmentize_to_file(self, pygmentize_cmd, md5, output_filename):
-        exit_val = load_entry_point('', 'console_scripts', 'pygmentize')()                                                                                                                         
+        exit_val = 0
+        try:
+            exit_val = load_entry_point('pygments-hack==0.2', 'console_scripts', 'pygmentize')()                                                                                                                         
+        except Exception:
+            exit_val = load_entry_point('Pygments', 'console_scripts', 'pygmentize')()                                                                                                                                          
         absolute_path = CACHE_DIR + md5
         shutil.copy2(output_filename, absolute_path)
         sys.exit(exit_val)
