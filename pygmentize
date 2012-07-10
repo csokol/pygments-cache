@@ -6,8 +6,6 @@ from cache import PygmentizeCache, PygmentizeExecutor, log
 
 pygments_cache = PygmentizeCache(sys.argv, PygmentizeExecutor())
 
-pygmentize_cmd = pygments_cache.parse_pygmentizeargs()
-
 try: 
     pygments_cache.execute()
         

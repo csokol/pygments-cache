@@ -1,6 +1,4 @@
 #!/usr/bin/python
-# EASY-INSTALL-ENTRY-SCRIPT: 'Pygments==1.5','console_scripts','pygmentize'
-__requires__ = 'Pygments==1.5'
 
 import sys, hashlib, os, shlex, time, shutil, traceback
 from subprocess import Popen, PIPE, STDOUT
