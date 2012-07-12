@@ -1,4 +1,4 @@
-INSTALLING:
+INSTALLING:   
  * Replace your pygmentize script for this one. You can find the path to your pygmentize executable by running "which pygmentize".
+ * Move the dir pygments_cache folder to some where your python installation can load that package (may be /usr/lib64/pyghon2.6). You can find out by running 'sys.path' in a python shell
  * Create the dir to hold your cache at ~/.pygments/cache (something like "mkdir -p ~/.pygmentize/cache" should work) 
- * Replace your pygmentize script for this one and be happy!
