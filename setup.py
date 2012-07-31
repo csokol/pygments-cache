@@ -18,6 +18,7 @@ setup(
       license='',
       install_requires=[
         'setuptools',
+        'pygments',
       ],
-      scripts=['pygmentize'],
+      scripts=['pygmentize-cached'],
 )
