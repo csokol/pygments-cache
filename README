@@ -1,5 +1,6 @@
 INSTALLING:
- * Run 'sudo python setup.py install'. You need setuptools and pygments packages installed.
+ * Run "sudo python setup.py install". You need setuptools and pygments packages installed.
+ * You can also install directly from github: "sudo easy_install https://github.com/csokol/pygments-cache/tarball/master"
  * Create the dir to hold your cache at ~/.pygments/cache (something like "mkdir -p ~/.pygmentize/cache" should work) 
  * Optionally, replace your pygmentize script for pygmentize-cached. You can find the path to your pygmentize executable by running "which pygmentize".
 
