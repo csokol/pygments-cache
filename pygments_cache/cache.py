@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys, hashlib, os, shlex, time, shutil, traceback
+from MySQLdb import *
 from pkg_resources import load_entry_point
                                                                                                                                                                                                 
 CACHE_DIR = os.getenv("HOME") + "/.pygments/cache/"
@@ -11,6 +12,9 @@ def log(string):
     log.close
 
 class CacheManipulator():
+    def __init__(self):
+        self.connection = connect(host="localhost", user="root", db="pygments")
+        
     def sourcecode_md5(self, sourcecode, pygmentize_cmd):
         md5 = hashlib.md5()
         md5.update(sourcecode + pygmentize_cmd)
@@ -29,6 +33,16 @@ class CacheManipulator():
         md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
         absolute_path = CACHE_DIR + md5
         shutil.copy2(output_filename, absolute_path)
+        
+    def save_to_db(md5, output_filename):
+        md5_long = int(md5, 16)
+        c = self.connection.cursor()
+        data = {
+            'hash': md5_long,
+            'code': open(output_filename, "r").read()
+        }
+        c.execute("insert into cache values (%(hash)s, %(code)s)", data)
+        
     
 class PygmentizeExecutor():
     def __init__(self, cache_manipulator):
