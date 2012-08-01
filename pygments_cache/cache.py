@@ -29,19 +29,20 @@ class CacheManipulator():
         else:
             return None
             
-    def write(self, code_to_pygmentize, pygmentize_command, output_filename):
-        md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
-        absolute_path = CACHE_DIR + md5
-        shutil.copy2(output_filename, absolute_path)
-        
-    def save_to_db(md5, output_filename):
-        md5_long = int(md5, 16)
+    def save_to_db(self, md5, output_filename):
         c = self.connection.cursor()
         data = {
-            'hash': md5_long,
+            'hash': md5,
             'code': open(output_filename, "r").read()
         }
         c.execute("insert into cache values (%(hash)s, %(code)s)", data)
+            
+    def write(self, code_to_pygmentize, pygmentize_command, output_filename):
+        md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
+        absolute_path = CACHE_DIR + md5
+        self.save_to_db(md5, output_filename)
+        shutil.copy2(output_filename, absolute_path)
+        
         
     
 class PygmentizeExecutor():
