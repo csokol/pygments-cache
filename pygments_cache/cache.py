@@ -57,6 +57,11 @@ class PygmentizeCache():
         self.pygmentize_command = self.parse_pygmentizeargs()
         self.pygmentize_executor = executor
         self.cache_manipulator = cache_manipulator
+        self.create_cache_dir()
+        
+    def create_cache_dir(self):
+        if not os.path.isdir(CACHE_DIR):
+            os.makedirs(CACHE_DIR)
 
     def contains_input_file(self):
         contains =  not self.pygmentize_arguments[len(self.pygmentize_arguments) - 2].startswith("-")
