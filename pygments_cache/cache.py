@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import sys, hashlib, os, shlex, time, shutil, traceback
+import sys, hashlib, os, shlex, time, shutil, traceback, redis
 from MySQLdb import *
 from pkg_resources import load_entry_point
-                                                                                                                                                                                                
+
 CACHE_DIR = os.getenv("HOME") + "/.pygments/cache/"
 
 def log(string):
@@ -15,6 +15,9 @@ class CacheManipulator():
     def __init__(self):
         self.connection = connect(host="localhost", user="root", db="pygments")
         self.cached_code = ""
+        self.pool = redis.ConnectionPool(host='localhost', port=6379, db=1)
+        self.redis_connection = redis.Redis(connection_pool=self.pool)
+        #redis.StrictRedis(host='localhost', port=6379, db=1)
         
     def sourcecode_md5(self, sourcecode, pygmentize_cmd):
         md5 = hashlib.md5()
@@ -33,10 +36,9 @@ class CacheManipulator():
             return None
             
     def find_from_db(self, md5):
-        cursor = self.connection.cursor()
-        results = cursor.execute("select code from cache where hash='%s'" % md5)
-        if results > 0:
-            self.cached_code = cursor.fetchone()[0]
+        code = self.redis_connection.get(md5)
+        if code != None:
+            self.cached_code = code
             return True
         return False
         
@@ -47,12 +49,8 @@ class CacheManipulator():
         #shutil.copy2(output_filename, absolute_path)
         
     def save_to_db(self, md5, output_filename):
-        c = self.connection.cursor()
-        data = {
-            'hash': md5,
-            'code': open(output_filename, "r").read()
-        }
-        c.execute("insert into cache values (%(hash)s, %(code)s)", data)
+        code = open(output_filename, "r").read()
+        self.redis_connection.set(md5, code)
     
 class PygmentizeExecutor():
     def __init__(self, cache_manipulator):
