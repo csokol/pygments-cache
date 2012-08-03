@@ -14,6 +14,7 @@ def log(string):
 class CacheManipulator():
     def __init__(self):
         self.connection = connect(host="localhost", user="root", db="pygments")
+        self.cached_code = ""
         
     def sourcecode_md5(self, sourcecode, pygmentize_cmd):
         md5 = hashlib.md5()
@@ -23,12 +24,28 @@ class CacheManipulator():
     def find_and_copy(self, code_to_pygmentize, pygmentize_command, output_filename):
         source_md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
         absolute_path = CACHE_DIR + source_md5
-        if (os.path.exists(absolute_path)):
+        if (self.find_from_db(source_md5)):
             shutil.copy2(absolute_path, output_filename)
+            out_file = open(output_filename, "w")
+            out_file.write(self.cached_code)
             return True
         else:
             return None
             
+    def find_from_db(self, md5):
+        cursor = self.connection.cursor()
+        results = cursor.execute("select code from cache where hash='%s'" % md5)
+        if results > 0:
+            self.cached_code = cursor.fetchone()[0]
+            return True
+        return False
+        
+    def write(self, code_to_pygmentize, pygmentize_command, output_filename):
+        md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
+        absolute_path = CACHE_DIR + md5
+        self.save_to_db(md5, output_filename)
+        #shutil.copy2(output_filename, absolute_path)
+        
     def save_to_db(self, md5, output_filename):
         c = self.connection.cursor()
         data = {
@@ -36,14 +53,6 @@ class CacheManipulator():
             'code': open(output_filename, "r").read()
         }
         c.execute("insert into cache values (%(hash)s, %(code)s)", data)
-            
-    def write(self, code_to_pygmentize, pygmentize_command, output_filename):
-        md5 = self.sourcecode_md5(code_to_pygmentize, pygmentize_command)
-        absolute_path = CACHE_DIR + md5
-        self.save_to_db(md5, output_filename)
-        shutil.copy2(output_filename, absolute_path)
-        
-        
     
 class PygmentizeExecutor():
     def __init__(self, cache_manipulator):
